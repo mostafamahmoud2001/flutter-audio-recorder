@@ -2,7 +2,9 @@
     package="com.example.flutter_audio_recorder">
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-   <application
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+
+    <application
         android:label="flutter_audio_recorder"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

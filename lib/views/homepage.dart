@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
-
+import 'package:path_provider/path_provider.dart';
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
 
@@ -15,9 +15,17 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     initRecorder();
+    requestPermission();
     super.initState();
-  }
 
+
+  }
+  void requestPermission() async {
+    final PermissionStatus permissionStatus = await Permission.manageExternalStorage.request();
+    if (permissionStatus != PermissionStatus.granted) {
+      throw Exception('Permission denied for storage');
+    }
+  }
   @override
   void dispose() {
     recorder.closeRecorder();
@@ -34,15 +42,37 @@ class _MyHomePageState extends State<MyHomePage> {
     await recorder.openRecorder();
     recorder.setSubscriptionDuration(const Duration(milliseconds: 500));
   }
+  Future<String?> getExternalStoragePath() async {
+    Directory? directory;
+    try {
+      directory = await getExternalStorageDirectory();
+    } catch (e) {
+      print('Failed to get external storage directory: $e');
+    }
+    String? path = directory?.path;
+    return path;
+  }
 
   Future startRecord() async {
-    await recorder.startRecorder(toFile: "audio");
+    String? externalStoragePath = await getExternalStoragePath();
+    if (externalStoragePath == null) {
+      throw Exception('External storage path not found');
+    }
+    String path = '$externalStoragePath/audio.wav';
+    await recorder.startRecorder(toFile: path);
   }
 
   Future stopRecorder() async {
     final filePath = await recorder.stopRecorder();
     final file = File(filePath!);
     print('Recorded file path: $filePath');
+
+    String? externalStoragePath = await getExternalStoragePath();
+    if (externalStoragePath == null) {
+      throw Exception('External storage path not found');
+    }
+    String destinationPath = '$externalStoragePath/audio.wav';
+    await file.copy(destinationPath);
   }
 
   @override
